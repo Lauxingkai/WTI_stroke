@@ -5,6 +5,6 @@ Analysis code for: "Waist-triglyceride index and stroke in middle-aged and older
 - scripts/00-07: dual-cohort pipeline (data -> cohorts -> main models -> discrimination/RCS -> Cox/Fine-Gray -> advanced modules -> tables/figures -> references).
 - scripts/08-10: three-round numeric audit, pre-review fixes.
 - scripts/12a-12c: regression calibration (TG repeated measures), physician-diagnosed subset, calibrated NRI.
-- scripts/13a-13i: CHARLS 2015 cross-sectional replication layer (codebook mapping -> build -> weighted M1-M3) + NDI 2019 public-use mortality linkage (parse -> survey-weighted cause-specific Cox) + MDE + integrity-gate re-run.
+- scripts/13a-13k: CHARLS 2015 cross-sectional replication layer (codebook mapping -> build -> weighted M1-M3) + NDI 2019 public-use mortality linkage (parse -> survey-weighted cause-specific Cox) + MDE + integrity-gate re-run.
 - Raw data NOT included (NHANES CDC public; CHARLS registration required). Results CSVs in results/ of the local project; contact corresponding author for access.
 - R 4.6.1 + Python 3; seed 42 everywhere.

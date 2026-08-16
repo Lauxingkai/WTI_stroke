@@ -22,7 +22,7 @@ mde_cox <- function(events, p_exposed_r2) {
 out <- c()
 
 # ---- A: CHARLS 2015 cross M3 ----
-ch <- read_csv("D:/NHANES/data/charls_2015_cross_cov.csv", show_col_types = FALSE) %>%
+ch <- read_csv("D:/NHANES/data/processed/charls_2015_cross_cov.csv", show_col_types = FALSE) %>%
   mutate(WTI_sd = (WTI - mean(WTI, na.rm = TRUE)) / sd(WTI, na.rm = TRUE),
          sex_m = ifelse(sex == 1, 1, 0)) %>%
   filter(!is.na(bloodweight) & bloodweight > 0 & !is.na(bmi) & !is.na(age) &

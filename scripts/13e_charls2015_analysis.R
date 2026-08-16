@@ -27,7 +27,7 @@ add_res <- function(cohort, layer, model, n, events, est, lo, hi, p) {
     cohort, layer, model, n, events, est, lo, hi, p)
 }
 
-ch <- read_csv(file.path(RAW, "data/charls_2015_cross_cov.csv"),
+ch <- read_csv(file.path(RAW, "data/processed/charls_2015_cross_cov.csv"),
                show_col_types = FALSE) %>%
   mutate(
     WTI_sd = (WTI - mean(WTI, na.rm = TRUE)) / sd(WTI, na.rm = TRUE),
@@ -115,12 +115,11 @@ for (sx in c(0, 1)) {
   fit <- svyglm(stroke_base ~ WTI_sd + age, family = quasibinomial(), design = sub)
   e <- extr(fit)
   add_res("CHARLS-2015", ifelse(sx == 1, "cross-men", "cross-women"), "M1",
-          nrow(sub$variables), sum(sub$variables$stroke_base, na.rm = TRUE),
+          length(residuals(fit)), sum(fit$y == 1, na.rm = TRUE),
           e[1], e[2], e[3], e[4])
   logline(sprintf("CHARLS2015 M1 %s: OR=%.3f (%.3f-%.3f) p=%.4f  [n=%d, events=%d]",
                   ifelse(sx == 1, "men", "women"), e[1], e[2], e[3], e[4],
-                  nrow(sub$variables),
-                  sum(sub$variables$stroke_base, na.rm = TRUE)))
+                  length(residuals(fit)), sum(fit$y == 1, na.rm = TRUE)))
 }
 
 # ---- sensitivity D: age-stratified M1 (mirrors 09_round3_s2 2011 strata) ----
@@ -130,11 +129,11 @@ for (ag in list(c(45, 59), c(60, 200))) {
   fit <- svyglm(stroke_base ~ WTI_sd + sex_m, family = quasibinomial(), design = sub)
   e <- extr(fit)
   add_res("CHARLS-2015", paste0("cross-age-", lbl), "M1",
-          nrow(sub$variables), sum(sub$variables$stroke_base, na.rm = TRUE),
+          length(residuals(fit)), sum(fit$y == 1, na.rm = TRUE),
           e[1], e[2], e[3], e[4])
   logline(sprintf("CHARLS2015 M1 age %s: OR=%.3f (%.3f-%.3f) p=%.4f  [n=%d, events=%d]",
                   lbl, e[1], e[2], e[3], e[4],
-                  nrow(sub$variables), sum(sub$variables$stroke_base, na.rm = TRUE)))
+                  length(residuals(fit)), sum(fit$y == 1, na.rm = TRUE)))
 }
 
 # ---- export ----

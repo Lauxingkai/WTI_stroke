@@ -90,12 +90,13 @@ run_cox <- function(outcome, label, tag) {
   m1 <- svycoxph(mk("WTI_sd + RIDAGEYR + RIAGENDR"), design = nhd)
   m2 <- svycoxph(mk("WTI_sd + RIDAGEYR + RIAGENDR + RIDRETH1 + edu + smoke + drink + bmi"), design = nhd)
   m3 <- svycoxph(mk("WTI_sd + RIDAGEYR + RIAGENDR + RIDRETH1 + edu + smoke + drink + bmi + htn + dm + statin + bp_rx + pa_ter"), design = nhd)
-  ev <- sum(nh[[outcome]] == 1, na.rm = TRUE)
   for (mm in c("m1", "m2", "m3")) {
     fit <- get(mm)
     e <- cox_extr(fit)
     rhs <- all.vars(fit$formula[[3]])
-    nn <- sum(complete.cases(nh[c("time_y", outcome, rhs)]))
+    ok <- complete.cases(nh[c("time_y", outcome, rhs)])
+    nn <- sum(ok)
+    ev <- sum(nh[[outcome]][ok] == 1, na.rm = TRUE)
     add_res("NHANES-NDI", label, toupper(paste0(tag, mm)), nn, ev, e[1], e[2], e[3], e[4])
     logline(sprintf("NHANES-NDI %s %s: HR=%.3f (%.3f-%.3f) p=%.4f [events=%d, n=%d]",
                     label, toupper(mm), e[1], e[2], e[3], e[4], ev, nn))

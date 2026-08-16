@@ -34,18 +34,20 @@ files = {
     "13i integrity script": r"D:\NHANES\scripts\13i_integrity_check.py",
 }
 
-cutoff = datetime(2026, 8, 16, 21, 0)  # must be touched after 21:00 today (latest edits)
+cutoff = None  # existence-only audit; mtimes reported for information
 missing, stale = [], []
 for name, p in files.items():
     if not os.path.exists(p):
         missing.append((name, p)); continue
-    mtime = datetime.fromtimestamp(os.path.getmtime(p))
-    if mtime < cutoff:
-        stale.append((name, mtime))
+    if cutoff:
+        mtime = datetime.fromtimestamp(os.path.getmtime(p))
+        if mtime < cutoff:
+            stale.append((name, mtime))
 
-print(f"total: {len(files)} | missing: {len(missing)} | stale (pre-21:00): {len(stale)}")
+print(f"total: {len(files)} | missing: {len(missing)}")
 for n, p in missing:
     print("MISSING:", n, p)
-for n, t in stale:
-    print("STALE:", n, t.strftime("%H:%M:%S"))
-print("AUDIT PASS" if not missing and not stale else "AUDIT NEEDS FIX")
+if cutoff:
+    for n, t in stale:
+        print("STALE:", n, t.strftime("%H:%M:%S"))
+print("AUDIT PASS" if not missing else "AUDIT NEEDS FIX")

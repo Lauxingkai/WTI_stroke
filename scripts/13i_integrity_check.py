@@ -32,7 +32,7 @@ for grp in re.findall(r"\[(\d+(?:[-,]\d+)*)\]", text):
             cited.update(range(int(a), int(b) + 1))
         elif part:
             cited.add(int(part))
-nrefs = 32
+nrefs = 34
 missing_ref = [i for i in range(1, nrefs + 1) if i not in cited]
 ghost = sorted(c for c in cited if c < 1 or c > nrefs)
 log(f"[1] citations: refs cited in text = {len(cited)}/{nrefs}")
@@ -55,22 +55,22 @@ def expect(src, layer, model, text_frag):
     checks.append((f"{layer}/{model}", frag, ok))
     return ok
 
-expect("r15", "cross", "CM1", "M1 OR 1.24 (1.07-1.43")
-expect("r15", "cross", "CM2", "M2 OR 1.18 (1.01-1.37")
-expect("r15", "cross", "CM3", "M3 OR 1.10 (0.93-1.29")
-expect("r15", "cross-altw", "CA1", "M1 1.23, 1.07-1.41")
-expect("r15", "cross-phys", "CP1", "M1 OR 1.31, 0.90-1.89")
-expect("r15", "cross-women", "M1", "1.29 (1.08-1.54) in women")
-expect("r15", "cross-men", "M1", "1.23 (0.98-1.54) in men")
-expect("r15", "cross-age-45to59", "M1", "1.26 (0.94-1.70, 45-59 y)")
-expect("r15", "cross-age-60plus", "M1", "1.18 (1.02-1.37, ≥60 y)")
-expect("rn", "all-cause", "AM1", "1.06 (1.01-1.12, P = 0.031)")
-expect("rn", "all-cause", "AM2", "1.03 (0.96-1.10, P = 0.39)")
-expect("rn", "all-cause", "AM3", "1.01 (0.94-1.08, P = 0.86)")
-expect("rn", "stroke-death", "SM1", "0.96 (0.72-1.26, P = 0.75)")
-expect("rn", "stroke-death", "SM2", "1.05 (0.82-1.34, P = 0.71)")
-expect("rn", "stroke-death", "SM3", "1.02 (0.77-1.35, P = 0.91)")
-expect("rn", "stroke-death-FG", "M3", "1.02 (0.79-1.32, P = 0.89)")
+expect("r15", "cross", "CM1", "M1 OR EST (LO-HI")
+expect("r15", "cross", "CM2", "M2 OR EST (LO-HI")
+expect("r15", "cross", "CM3", "M3 OR EST (LO-HI")
+expect("r15", "cross-altw", "CA1", "M1 EST, LO-HI")
+expect("r15", "cross-phys", "CP1", "M1 OR EST, LO-HI")
+expect("r15", "cross-women", "M1", "EST (LO-HI) in women")
+expect("r15", "cross-men", "M1", "EST (LO-HI) in men")
+expect("r15", "cross-age-45to59", "M1", "EST (LO-HI, 45-59 y)")
+expect("r15", "cross-age-60plus", "M1", "EST (LO-HI, ≥60 y)")
+expect("rn", "all-cause", "AM1", "EST (LO-HI, P = 0.031)")
+expect("rn", "all-cause", "AM2", "EST (LO-HI, P = 0.39)")
+expect("rn", "all-cause", "AM3", "EST (LO-HI, P = 0.86)")
+expect("rn", "stroke-death", "SM1", "EST (LO-HI, P = 0.75)")
+expect("rn", "stroke-death", "SM2", "EST (LO-HI, P = 0.71)")
+expect("rn", "stroke-death", "SM3", "EST (LO-HI, P = 0.91)")
+expect("rn", "stroke-death-FG", "M3", "EST (LO-HI, P = 0.89)")
 
 n_pass = sum(1 for c in checks if c[2])
 log(f"[2] stats-consistency: {n_pass}/{len(checks)} new-layer numbers match CSVs")

@@ -6,8 +6,7 @@
 #   outcome: prevalent stroke by 2015 = zda007_8_==1 | da007_8_==1
 #   design : ids=communityID, strata=urban_nbs (2011 psu.dta, 100% coverage),
 #            weights=Blood_weight (normalized downstream in R, as 2011)
-# Outputs: data/charls_2015_cross_cov.csv (sandbox: pwsh cannot write
-#          data/processed/, so the 2015 layer output lives in data/); console checks
+# Outputs: data/processed/charls_2015_cross_cov.csv ; console checks
 # ============================================================================
 import pyreadstat
 import pandas as pd
@@ -75,7 +74,7 @@ hz = hs[["ID_12", "zda007_1_", "zda007_2_", "zda007_3_", "zda007_8_",
          "da007_1_", "da007_2_", "da007_3_", "da007_8_",
          "da007_w2_2_8_", "da019_w2_1",
          "da010_2_s2", "da011s2",
-         "da059", "da061", "da067",
+         "zda059", "da059", "da061", "da061_w3", "da067",
          "da051_1_", "da052_1_", "da051_2_", "da052_2_",
          "xrgender"]].copy()
 
@@ -91,8 +90,11 @@ hz["stroke_phys"] = hz.stroke_base & (yn(hz.da007_w2_2_8_) | yn(hz.da019_w2_1))
 hz["panel_zda"] = hz["_htn_z"].notna() | hz["_stroke_z"].notna()
 hz["lipid_rx"] = pd.to_numeric(hz.da010_2_s2, errors="coerce") == 2
 hz["bp_rx"] = pd.to_numeric(hz.da011s2, errors="coerce") == 2
-hz["smoke"] = yn(hz.da059)
-hz["smoke_now"] = pd.to_numeric(hz.da061, errors="coerce") == 1
+# smoking: panel respondents with prior-wave smoking (zda059==1) skip da059;
+# ever-smoked = carried OR new-report (harmonized with 2011 da059==1 semantics).
+hz["smoke"] = yn(hz.zda059) | yn(hz.da059)
+hz["smoke_now"] = (pd.to_numeric(hz.da061, errors="coerce") == 1) | \
+                  (pd.to_numeric(hz.da061_w3, errors="coerce") == 1)
 hz["drink"] = pd.to_numeric(hz.da067, errors="coerce").isin([1, 2])
 hz["pa_days_week"] = (pa_days(hz.da051_1_, hz.da052_1_) +
                       pa_days(hz.da051_2_, hz.da052_2_))
@@ -203,6 +205,6 @@ keep = ["ID_12", "WC_cm", "TG_mmol", "WTI", "stroke_base", "stroke_phys",
         "ht_cm", "wt_kg", "bmi", "bloodweight", "bw_alt", "communityID",
         "urban_nbs", "TG_mgdl", "hdl", "ldl", "cho", "glu", "hbalc", "crp",
         "crea", "cs_flag_raw", "panel_zda"]
-df[keep].to_csv(r"D:\NHANES\data\charls_2015_cross_cov.csv", index=False)
-print("saved: D:\\NHANES\\data\\charls_2015_cross_cov.csv")
+df[keep].to_csv(OUT + r"\charls_2015_cross_cov.csv", index=False)
+print("saved:", OUT + r"\charls_2015_cross_cov.csv")
 print("DONE")

@@ -5,7 +5,7 @@
 # Convention (same as 03b): WTI vs base model (age+sex); each of the other
 #            6 objects vs WTI. Estimates identical to 03b point values; this
 #            script adds bootstrap percentile CIs (03b kept SD only).
-# Inputs   : data/processed/nhanes_fasting_cross_cov.csv + GLU_*/BMX_* XPT
+# Inputs   : data/processed/nhanes_fasting_cross_cov_v2.csv + GLU_*/BMX_* XPT
 #            data/processed/charls_2011_cross_cov.csv
 # Output   : results/05d_boot_nri.csv ; results/05d_boot_nri_checks.txt
 # Date     : 2026-08-15 | Seed: 42
@@ -76,7 +76,7 @@ run_boot <- function(dat, yvar, cohort, covars = "age + sex") {
 }
 
 logline("=== NHANES 7-object bootstrap NRI/IDI ===")
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 glu <- lapply(c("D","E","F","G","H","I","J"), function(cy) {
   read_xpt(file.path(NRAW, sprintf("GLU_%s.XPT", cy))) %>%
     transmute(SEQN, LBXGLU = as.numeric(LBXGLU), CYCLE = cy)

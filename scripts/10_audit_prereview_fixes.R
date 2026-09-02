@@ -11,7 +11,7 @@ lines <- character(0)
 log <- function(...) { l <- sprintf(...); lines <<- c(lines, l); cat(l, "\n") }
 
 # ---------------- NHANES: M3 + continuous FPG ----------------
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 glu <- lapply(c("D","E","F","G","H","I","J"), function(cy) {
   read_xpt(file.path(NRAW, sprintf("GLU_%s.XPT", cy))) %>%
     transmute(SEQN, LBXGLU = as.numeric(LBXGLU), CYCLE = cy)
@@ -26,7 +26,7 @@ nh <- nh %>% left_join(glu, by = c("SEQN", "CYCLE.x" = "CYCLE")) %>%
   mutate(wt = WTSAF / 7, psu = paste0(CYCLE, "_", SDMVPSU), stra = paste0(CYCLE, "_", SDMVSTRA),
          WTI_sd = (WTI - mean(WTI, na.rm=TRUE)) / sd(WTI, na.rm=TRUE),
          FPG_z = (LBXGLU - mean(LBXGLU, na.rm=TRUE)) / sd(LBXGLU, na.rm=TRUE),
-         pa_ter = cut(pa_min_day, quantile(pa_min_day, c(0,1/3,2/3,1), na.rm=TRUE),
+         pa_ter = cut(pa_mvpaw_min, quantile(pa_mvpaw_min, c(0,1/3,2/3,1), na.rm=TRUE),
                       include.lowest=TRUE, labels = c("L","M","H")),
          sex_f = ifelse(RIAGENDR == 1, 1, 0))
 nhd <- svydesign(ids = ~psu, strata = ~stra, weights = ~wt, data = nh, nest = TRUE)
@@ -51,9 +51,13 @@ ch <- read_csv(file.path(OUT, "charls_2011_cross_cov.csv"), show_col_types = FAL
          sex_m = ifelse(sex == 1, 1, 0), age = as.numeric(age),
          FPG_z = (newglu - mean(newglu, na.rm=TRUE)) / sd(newglu, na.rm=TRUE),
          pa_ter = cut(pa_days_week, c(-1, 0, 1, 100), labels = c("0d","1-6d","7d")),
-         w_norm = bloodweight / mean(bloodweight, na.rm=TRUE)) %>%
-  filter(!is.na(bloodweight) & bloodweight > 0 & !is.na(bmi) & !is.na(age))
-chd <- svydesign(ids = ~communityID, strata = ~urban_nbs, weights = ~w_norm, data = ch, nest = TRUE)
+         w_norm = bloodweight / mean(bloodweight, na.rm=TRUE))
+ch_cov <- ch %>% filter(!is.na(bloodweight) & bloodweight > 0 & !is.na(bmi) & !is.na(age))
+chd <- svydesign(ids = ~communityID, strata = ~urban_nbs, weights = ~w_norm, data = ch_cov, nest = TRUE)
+# maximal M1 sample for the interaction test (mirrors 03_analysis.R v2)
+ch_m1 <- ch %>% filter(!is.na(bloodweight) & bloodweight > 0 & !is.na(age) &
+                         !is.na(sex_m) & !is.na(WTI) & !is.na(stroke_base))
+chd1 <- svydesign(ids = ~communityID, strata = ~urban_nbs, weights = ~w_norm, data = ch_m1, nest = TRUE)
 run_ch <- function(form, tag) {
   m <- svyglm(form, family = quasibinomial(), design = chd)
   s <- coef(summary(m))["WTI_sd", ]
@@ -64,7 +68,7 @@ run_ch(stroke_base ~ WTI_sd + age + sex_m + edu + smoke + drink + bmi +
          htn + dm + lipid_rx + bp_rx + pa_ter, "cm3")
 run_ch(stroke_base ~ WTI_sd + age + sex_m + edu + smoke + drink + bmi +
          htn + dm + lipid_rx + bp_rx + pa_ter + FPG_z, "cm3+FPG")
-ci <- svyglm(stroke_base ~ WTI_sd * sex_m + age, family = quasibinomial(), design = chd)
+ci <- svyglm(stroke_base ~ WTI_sd * sex_m + age, family = quasibinomial(), design = chd1)
 cii <- coef(summary(ci))["WTI_sd:sex_m", ]
 log("CHARLS cm1 WTI x sex interaction: beta=%.4f p=%.4f", cii[1], cii[4])
 
@@ -73,10 +77,13 @@ ev <- read_csv(file.path(OUT, "charls_events_2011_2018.csv"), show_col_types = F
 d <- pr %>% left_join(ev, by = "ID_12") %>%
   mutate(WTI_sd = (WTI - mean(WTI, na.rm=TRUE)) / sd(WTI, na.rm=TRUE),
          sex_m = ifelse(sex == 1, 1, 0), age = as.numeric(age),
-         w = bloodweight / mean(bloodweight, na.rm=TRUE)) %>%
-  filter(!is.na(WTI_sd) & !is.na(age) & !is.na(bmi) & !is.na(stroke))
-pd <- svydesign(ids = ~communityID, strata = ~urban_nbs, weights = ~w, data = d, nest = TRUE)
-pi <- svyglm(stroke_2018 ~ WTI_sd * sex_m + age, family = quasibinomial(), design = pd)
+         w = bloodweight / mean(bloodweight, na.rm=TRUE))
+d_cov <- d %>% filter(!is.na(WTI_sd) & !is.na(age) & !is.na(bmi) & !is.na(stroke))
+pd <- svydesign(ids = ~communityID, strata = ~urban_nbs, weights = ~w, data = d_cov, nest = TRUE)
+d_m1 <- d %>% filter(!is.na(WTI_sd) & !is.na(age) & !is.na(sex_m) & !is.na(stroke) &
+                       !is.na(bloodweight) & bloodweight > 0)
+pd1 <- svydesign(ids = ~communityID, strata = ~urban_nbs, weights = ~w, data = d_m1, nest = TRUE)
+pi <- svyglm(stroke_2018 ~ WTI_sd * sex_m + age, family = quasibinomial(), design = pd1)
 pii <- coef(summary(pi))["WTI_sd:sex_m", ]
 log("CHARLS pm1 WTI x sex interaction: beta=%.4f p=%.4f", pii[1], pii[4])
 

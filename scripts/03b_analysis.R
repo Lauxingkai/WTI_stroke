@@ -17,9 +17,11 @@ logf <- file(file.path(RES, "03b_checks.txt"), open = "wt")
 logline <- function(...) { cat(..., "\n"); cat(..., "\n", file = logf) }
 
 disc_rows <- list()
-add_disc <- function(cohort, obj, auc, lo, hi, dauc_vs_wti, delong_p, nri, idi) {
+add_disc <- function(cohort, obj, auc, lo, hi, dauc_vs_wti, delong_p, nri, idi,
+                     dauc_vs_base = NA_real_, delong_p_base = NA_real_) {
   disc_rows[[length(disc_rows)+1]] <<- data.frame(
-    cohort, object = obj, auc, lo, hi, dauc_vs_wti, delong_p, nri, idi)
+    cohort, object = obj, auc, lo, hi, dauc_vs_wti, delong_p, nri, idi,
+    dauc_vs_base, delong_p_base)
 }
 
 nri_idi <- function(p0, p1, y, B = 500) {
@@ -59,6 +61,8 @@ run_disc <- function(dat, yvar, cohort, covars = "age + sex") {
       rt <- roc.test(roc(yok, p0k, quiet=TRUE), roc1, method = "delong")
       dp <- rt$p.value; da <- a1 - as.numeric(auc(roc(yok, p0k, quiet=TRUE)))
       ni <- nri_idi(p0k, p1k, yok)
+      add_disc(cohort, obj, a1, ci1[1], ci1[3], da, dp, ni["nri"], ni["idi"],
+               dauc_vs_base = da, delong_p_base = dp)
     } else {
       fw <- glm(as.formula(paste(yvar, "~ WTI +", covars)), data = dat, family = binomial(),
                 na.action = na.exclude)
@@ -66,8 +70,12 @@ run_disc <- function(dat, yvar, cohort, covars = "age + sex") {
       rt <- roc.test(roc(yok, pw, quiet=TRUE), roc1, method = "delong")
       dp <- rt$p.value; da <- a1 - as.numeric(auc(roc(yok, pw, quiet=TRUE)))
       ni <- nri_idi(pw, p1k, yok)
+      # vs base (age+sex) comparison, for every index
+      rtb <- roc.test(roc(yok, p0k, quiet=TRUE), roc1, method = "delong")
+      da_b <- a1 - as.numeric(auc(roc(yok, p0k, quiet=TRUE)))
+      add_disc(cohort, obj, a1, ci1[1], ci1[3], da, dp, ni["nri"], ni["idi"],
+               dauc_vs_base = da_b, delong_p_base = rtb$p.value)
     }
-    add_disc(cohort, obj, a1, ci1[1], ci1[3], da, dp, ni["nri"], ni["idi"])
     logline(sprintf("%s %-5s AUC=%.3f (%.3f-%.3f) dAUC=%.3f p=%.3f NRI=%.3f IDI=%.3f",
                     cohort, obj, a1, ci1[1], ci1[3], da, dp, ni["nri"], ni["idi"]))
   }
@@ -77,7 +85,7 @@ run_disc <- function(dat, yvar, cohort, covars = "age + sex") {
 # 1. NHANES: add fasting glucose (GLU) + height (BMX) -> 7 objects
 # ---------------------------------------------------------------------------
 logline("=== STEP 1: NHANES 7-object discrimination ===")
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 glu <- lapply(c("D","E","F","G","H","I","J"), function(cy) {
   read_xpt(file.path(NRAW, sprintf("GLU_%s.XPT", cy))) %>%
     transmute(SEQN, LBXGLU = as.numeric(LBXGLU), CYCLE = cy)

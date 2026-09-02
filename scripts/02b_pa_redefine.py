@@ -65,7 +65,7 @@ print('cohort:', len(nh))
 nh = nh.merge(pa, left_on=['SEQN','CYCLE.x'], right_on=['SEQN','CYCLE'], how='left')
 if 'pa_mvpaw_min_y' in nh.columns: nh.rename(columns={'pa_mvpaw_min_y':'pa_mvpaw_min'}, inplace=True)
 nh = nh.drop(columns=[c for c in ['CYCLE','pa_mvpaw_min_y'] if c in nh.columns])
-nh = nh.drop(columns=['pa_min_day'], errors='ignore')
+nh = nh.drop(columns=['pa_min_day'], errors='ignore')   # 移除旧 PA 列（v1 遗留）
 print('post-merge n:', len(nh), '| pa non-NA:', int(nh.pa_mvpaw_min.notna().sum()), '| NA:', int(nh.pa_mvpaw_min.isna().sum()))
 print('describe:', nh.pa_mvpaw_min.describe().round(1).to_dict())
 print('==0:', int((nh.pa_mvpaw_min==0).sum()))

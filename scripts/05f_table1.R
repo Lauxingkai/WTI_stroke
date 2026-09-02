@@ -72,7 +72,7 @@ fmt_cat <- function(design, var, group, label, show = NULL) {
 # NHANES
 # ---------------------------------------------------------------------------
 logline("=== NHANES Table 1 ===")
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 des <- lapply(c("D","E","F","G","H","I","J"), function(cy) {
   read_xpt(file.path(NRAW, sprintf("DEMO_%s.XPT", cy))) %>%
     transmute(SEQN, SDMVSTRA, SDMVPSU, CYCLE = cy)
@@ -100,7 +100,7 @@ nh <- nh %>% left_join(des, by = c("SEQN" = "SEQN", "CYCLE.x" = "CYCLE")) %>%
     htn_f = ifelse(htn, "Yes", "No"), dm_f = ifelse(dm, "Yes", "No"),
     statin_f = ifelse(statin == 1, "Yes", "No"),
     bprx_f = ifelse(bp_rx, "Yes", "No"),
-    pa_cont = as.numeric(pa_min_day)
+    pa_cont = as.numeric(pa_mvpaw_min)
   )
 nhd <- svydesign(ids = ~psu, strata = ~stra, weights = ~wt, data = nh, nest = TRUE)
 
@@ -111,7 +111,7 @@ build_nh <- function(group) {
     fmt_cont(nhd, "WTI", group, "WTI, cm-mmol/L"),
     fmt_cont(nhd, "BMXWAIST", group, "Waist circumference, cm"),
     fmt_cont(nhd, "TG_mmol", group, "Triglycerides, mmol/L"),
-    fmt_cont(nhd, "pa_cont", group, "Physical activity, min/day"))
+    fmt_cont(nhd, "pa_cont", group, "Physical activity, min/wk"))
   cats <- bind_rows(
     fmt_cat(nhd, "sex_f", group, "Male", show = "Male"),
     fmt_cat(nhd, "edu_f", group, "Education"),
@@ -155,7 +155,7 @@ ch <- read_csv(file.path(OUT, "charls_2011_cross_cov.csv"), show_col_types = FAL
     pa_cont = as.numeric(pa_days_week),
     age = as.numeric(age)
   ) %>%
-  filter(!is.na(bloodweight) & bloodweight > 0 & !is.na(bmi) & !is.na(age))
+  filter(!is.na(bloodweight) & bloodweight > 0 & !is.na(age))
 chd <- svydesign(ids = ~communityID, strata = ~urban_nbs, weights = ~w_norm,
                  data = ch, nest = TRUE)
 

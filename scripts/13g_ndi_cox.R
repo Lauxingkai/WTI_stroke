@@ -26,7 +26,7 @@ add_res <- function(cohort, layer, model, n, events, est, lo, hi, p) {
 }
 
 # ---- cohort + mortality link ----
-nh <- read_csv(file.path(PROC, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(PROC, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 mort <- read_csv(file.path(OUT, "nhanes_mort2019.csv"), show_col_types = FALSE) %>%
   select(seqn, eligstat, mortstat, ucod_leading, permth_int)
 
@@ -58,7 +58,7 @@ nh <- nh %>% left_join(des, by = c("SEQN" = "SEQN", "CYCLE.x" = "CYCLE")) %>%
     WTI_sd = (WTI - mean(WTI, na.rm = TRUE)) / sd(WTI, na.rm = TRUE),
     WTI_ter = cut(WTI, quantile(WTI, c(0, 1/3, 2/3, 1), na.rm = TRUE),
                   include.lowest = TRUE, labels = c("T1", "T2", "T3")),
-    pa_ter = cut(pa_min_day, quantile(pa_min_day, c(0, 1/3, 2/3, 1), na.rm = TRUE),
+    pa_ter = cut(pa_mvpaw_min, quantile(pa_mvpaw_min, c(0, 1/3, 2/3, 1), na.rm = TRUE),
                  include.lowest = TRUE, labels = c("L", "M", "H")),
     time_y = permth_int / 12,
     death = ifelse(mortstat == 1, 1, 0),

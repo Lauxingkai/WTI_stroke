@@ -30,7 +30,8 @@ d <- pr %>% left_join(ev, by = "ID_12") %>%
          sex_m = ifelse(sex == 1, 1, 0), age = as.numeric(age),
          w = bloodweight / mean(bloodweight, na.rm=TRUE),
          ftime = pmin(time, 7.0)) %>%
-  filter(!is.na(WTI_sd) & !is.na(age) & !is.na(bmi) & !is.na(stroke))
+  filter(!is.na(WTI_sd) & !is.na(age) & !is.na(sex_m) & !is.na(stroke) &
+           !is.na(ftime) & !is.na(bloodweight) & bloodweight > 0)
 c1 <- coxph(Surv(ftime, stroke) ~ WTI_sd + age + sex_m, data = d, weights = w, cluster = communityID)
 b <- coef(c1)["WTI_sd"]; se <- sqrt(vcov(c1)["WTI_sd", "WTI_sd"])
 logline("naive Cox M1: logHR=%.4f (HR %.4f, CI %.4f-%.4f)", b, exp(b), exp(b - 1.96*se), exp(b + 1.96*se))

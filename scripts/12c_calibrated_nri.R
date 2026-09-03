@@ -42,7 +42,7 @@ run <- function(dat, yvar, tag) {
       tag, raw["nri"], raw["idi"], cal["nri"], cal["idi"])
 }
 
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 nh$age <- nh$RIDAGEYR; nh$sex <- nh$RIAGENDR
 run(nh, "stroke", "NHANES")
 ch <- read_csv(file.path(OUT, "charls_2011_cross_cov.csv"), show_col_types = FALSE) %>%

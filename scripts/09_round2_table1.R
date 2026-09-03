@@ -18,7 +18,7 @@ check_cell <- function(tag, got, want) {
 }
 
 # ---------------- NHANES ----------------
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 des <- lapply(c("D","E","F","G","H","I","J"), function(cy) {
   read_xpt(file.path(NRAW, sprintf("DEMO_%s.XPT", cy))) %>%
     transmute(SEQN, SDMVSTRA, SDMVPSU, CYCLE = cy)

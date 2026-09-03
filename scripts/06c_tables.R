@@ -4,7 +4,9 @@
 # numbers): Table 2 main models; Table 3 discrimination; Table 4 sensitivity.
 # Output: results/Table2_main_models.csv/.md ; Table3_discrimination.csv/.md ;
 #         Table4_sensitivity.csv/.md ; results/06c_tables_checks.txt
-# Date: 2026-08-15 | Seed: 42 (no randomness)
+# Date: 2026-08-15 | v2 2026-08-20 (getfit bugfix: regex first-element NA ->
+#         grep on line; Table 3 adds vs-base columns; M1/M23 design parsing)
+# Seed: 42 (no randomness)
 # ============================================================================
 suppressPackageStartupMessages({library(dplyr); library(readr)})
 RAW <- "D:/NHANES"; RES <- file.path(RAW, "results")
@@ -17,40 +19,47 @@ pval <- function(p) ifelse(p < 0.001, "<0.001", sprintf("%.3f", p))
 # ---------------- Table 2: main models ----------------
 m  <- read_csv(file.path(RES, "03_main_models.csv"), show_col_types = FALSE)
 cf <- read_csv(file.path(RES, "03c_cox_fg.csv"), show_col_types = FALSE)
-# parse Cox/FG analytic n and events from 03c_checks.txt (single source of truth)
-c03 <- readLines(file.path(RES, "03c_checks.txt"))
-cnm <- regmatches(c03, regexec("cohort n=(\\d+) \\| stroke (\\d+) \\| death (\\d+)", c03))[[1]]
-n_cox <- as.integer(cnm[2]); ev_cox <- as.integer(cnm[3])
-# parse model-fitted n/events from 03_analysis_checks.txt
+# parse analytic n and events from check logs (single source of truth)
 a03 <- readLines(file.path(RES, "03_analysis_checks.txt"))
-getfit <- function(pat) {
-  v <- regmatches(a03, regexec(pat, a03))[[1]]
+c03 <- readLines(file.path(RES, "03c_checks.txt"))
+getfit <- function(lines, pat) {
+  hit <- grep(pat, lines, value = TRUE)
+  if (length(hit) == 0) return(c(n = NA_integer_, ev = NA_integer_))
+  v <- regmatches(hit[1], regexec(pat, hit[1]))[[1]]
   c(n = as.integer(v[2]), ev = as.integer(v[3]))
 }
-fit_nh   <- getfit("NHANES design: n=(\\d+), events=(\\d+)")
-fit_chc  <- getfit("CHARLS cross design: n=(\\d+), events=(\\d+)")
-fit_chp  <- getfit("CHARLS prospective design: n=(\\d+), events=(\\d+)")
-fit_xy <- data.frame(
-  layer_key = c("NHANES-cross", "CHARLS-cross", "CHARLS-prosp7y"),
-  n = c(fit_nh["n"], fit_chc["n"], fit_chp["n"]),
-  ev = c(fit_nh["ev"], fit_chc["ev"], fit_chp["ev"]))
+fit_nh    <- getfit(a03, "NHANES design: n=(\\d+), events=(\\d+)")
+fit_ch_m1 <- getfit(a03, "CHARLS cross M1 design: n=(\\d+), events=(\\d+)")
+fit_ch_23 <- getfit(a03, "CHARLS cross M23 design: n=(\\d+), events=(\\d+)")
+fit_pr_m1 <- getfit(a03, "CHARLS prospective M1 design: n=(\\d+), events=(\\d+)")
+fit_pr_23 <- getfit(a03, "CHARLS prospective M23 design: n=(\\d+), events=(\\d+)")
+cox_m1 <- getfit(c03, "Cox-M1 fitted n=(\\d+) events=(\\d+)")
+cox_m3 <- getfit(c03, "Cox-M3 fitted n=(\\d+) events=(\\d+)")
+fg_m1  <- getfit(c03, "FG-M1 fitted n=(\\d+) events=(\\d+)")
+fg_m3  <- getfit(c03, "FG-M3 fitted n=(\\d+) events=(\\d+)")
+
 t2 <- bind_rows(
   m %>% transmute(
-    layer_key = paste(cohort, layer, sep = "-"),
     Layer = case_when(cohort == "NHANES" & layer == "cross" ~ "NHANES cross-sectional",
                       cohort == "CHARLS" & layer == "cross" ~ "CHARLS cross-sectional",
                       TRUE ~ "CHARLS prospective (7-y)"),
-    Model = toupper(model), N = NA_integer_, Events = NA_integer_,
+    Model = toupper(model),
+    N = n, Events = events,
     `Effect (95% CI)` = sprintf("%s (%s-%s)", fmt2(est), fmt2(lo), fmt2(hi)),
     P = pval(p),
     Analysis = ifelse(layer == "prosp7y",
                       "Survey-weighted logistic (2018-wave outcome)",
-                      "Survey-weighted logistic")) %>%
-    left_join(fit_xy, by = "layer_key") %>%
-    mutate(N = n, Events = ev) %>% select(-layer_key, -n, -ev),
+                      "Survey-weighted logistic")),
   cf %>% transmute(
     Layer = "CHARLS prospective (7-y)", Model = model,
-    N = n_cox, Events = ev_cox,
+    N = case_when(
+      model == "Cox-M1" ~ cox_m1["n"], model == "Cox-M3" ~ cox_m3["n"],
+      model == "FG-M1" ~ fg_m1["n"], model == "FG-M3" ~ fg_m3["n"],
+      TRUE ~ NA_real_),
+    Events = case_when(
+      model == "Cox-M1" ~ cox_m1["ev"], model == "Cox-M3" ~ cox_m3["ev"],
+      model == "FG-M1" ~ fg_m1["ev"], model == "FG-M3" ~ fg_m3["ev"],
+      TRUE ~ NA_real_),
     `Effect (95% CI)` = sprintf("%s (%s-%s)", fmt2(hr), fmt2(lo), fmt2(hi)),
     P = pval(p),
     Analysis = ifelse(grepl("FG", model), "Fine-Gray subdistribution", "Cause-specific Cox"))
@@ -67,11 +76,12 @@ t3 <- d3 %>%
   transmute(
     Cohort = cohort, Index = object,
     AUC = sprintf("%s (%s-%s)", fmt3(auc), fmt3(lo), fmt3(hi)),
-    `Delta AUC vs WTI` = fmt3(dauc_vs_wti),
-    `DeLong P` = pval(delong_p),
+    `Delta AUC vs WTI` = ifelse(object == "WTI", "\u2014", fmt3(dauc_vs_wti)),
+    `DeLong P` = ifelse(object == "WTI", "\u2014", pval(delong_p)),
+    `Delta AUC vs base` = fmt3(dauc_vs_base),
+    `DeLong P (vs base)` = pval(delong_p_base),
     NRI = sprintf("%s (%s, %s)", fmt3(nri), fmt3(nri_lo), fmt3(nri_hi)),
-    IDI = sprintf("%.5f (%.5f, %.5f)", idi, idi_lo, idi_hi),
-    `Comparison` = ifelse(object == "WTI", "vs base (age+sex)", "vs WTI"))
+    IDI = sprintf("%.5f (%.5f, %.5f)", idi, idi_lo, idi_hi))
 write_csv(t3, file.path(RES, "Table3_discrimination.csv"))
 logline(sprintf("Table 3 rows: %d", nrow(t3)))
 
@@ -89,7 +99,7 @@ t4a <- e %>% filter(source %in% c("NHANES-cross-M1","CHARLS-cross-cm1",
     Result = sprintf("E-value %.2f (CI-upper %.2f); OR/HR %.2f (%.2f-%.2f)",
                      evalue_est, evalue_ci, est, lo, hi))
 t4b <- l2 %>% transmute(
-  Analysis = "Lag-2 landmark (events/deaths in 0-2 y excluded; n=8,965, stroke 492)",
+  Analysis = "Lag-2 landmark (events/deaths in 0-2 y excluded; M1 n=9,545, stroke 539; M3 n=8,965, stroke 492)",
   Model = model, Result = sprintf("HR/sHR %s (%s-%s), p=%s", fmt2(hr), fmt2(lo), fmt2(hi), pval(p)))
 t4c <- ic %>% transmute(
   Analysis = "Interval-censored discrete-time logistic (person-period)",

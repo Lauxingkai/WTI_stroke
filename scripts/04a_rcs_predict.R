@@ -7,7 +7,7 @@ suppressPackageStartupMessages({library(survey); library(splines); library(dplyr
 RAW <- "D:/NHANES"; NRAW <- file.path(RAW, "data/raw"); OUT <- file.path(RAW, "data/processed"); RES <- file.path(RAW, "results")
 
 # ---- NHANES ----
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 des <- lapply(c("D","E","F","G","H","I","J"), function(cy) {
   haven::read_xpt(file.path(NRAW, sprintf("DEMO_%s.XPT", cy))) %>%
     transmute(SEQN, SDMVSTRA, SDMVPSU, CYCLE = cy)

@@ -35,7 +35,7 @@ out <- c(out, sprintf("CHARLS2015 cross M3: n=%d events=%d R2=%.3f -> MDE OR %.3
                       mde_logistic(nrow(ch), sum(ch$stroke_base), r2_a)))
 
 # ---- B/C: NHANES-NDI Cox ----
-nh <- read_csv("D:/NHANES/data/processed/nhanes_fasting_cross_cov.csv",
+nh <- read_csv("D:/NHANES/data/processed/nhanes_fasting_cross_cov_v2.csv",
                show_col_types = FALSE)
 mort <- read_csv("D:/NHANES/data/nhanes_mort2019.csv", show_col_types = FALSE) %>%
   select(seqn, mortstat, ucod_leading, permth_int)
@@ -43,7 +43,7 @@ nh <- nh %>% left_join(mort, by = c("SEQN" = "seqn")) %>%
   mutate(death = ifelse(mortstat == 1, 1, 0),
          death_stroke = ifelse(mortstat == 1 & ucod_leading == 5, 1, 0),
          WTI_sd = (WTI - mean(WTI, na.rm = TRUE)) / sd(WTI, na.rm = TRUE),
-         pa_ter = cut(pa_min_day, quantile(pa_min_day, c(0, 1/3, 2/3, 1), na.rm = TRUE),
+         pa_ter = cut(pa_mvpaw_min, quantile(pa_mvpaw_min, c(0, 1/3, 2/3, 1), na.rm = TRUE),
                       include.lowest = TRUE, labels = c("L", "M", "H"))) %>%
   filter(!is.na(permth_int), !is.na(mortstat), !is.na(WTI))
 r2_ndi <- summary(lm(WTI_sd ~ RIDAGEYR + RIAGENDR + RIDRETH1 + edu + smoke + drink +

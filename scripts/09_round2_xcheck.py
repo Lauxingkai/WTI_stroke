@@ -61,7 +61,7 @@ hr = np.exp(cph.params_["WTI_sd"]); ci = np.exp(cph.confidence_intervals_.loc["W
 log(f"CHARLS Cox-M1: py HR={hr:.4f} CI=({ci[0]:.4f}-{ci[1]:.4f}) p={cph.summary.loc['WTI_sd','p']:.4f} | R ref 1.106 (1.039-1.178) p=0.0016")
 
 # ---------- 3) Discrimination AUC (unweighted Logit, sklearn) ----------
-nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov.csv")
+nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov_v2.csv")
 nh["WTI_sd"] = (nh["WTI"] - nh["WTI"].mean()) / nh["WTI"].std()
 f0 = sm.Logit(nh["stroke"].astype(float), sm.add_constant(nh[["RIDAGEYR", "RIAGENDR"]].astype(float))).fit(disp=0)
 p0 = f0.predict(sm.add_constant(nh[["RIDAGEYR", "RIAGENDR"]].astype(float)))

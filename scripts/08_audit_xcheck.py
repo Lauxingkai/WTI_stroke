@@ -13,7 +13,7 @@ import statsmodels.api as sm
 OUT = r"D:\NHANES\data\processed"
 NRAW = r"D:\NHANES\data\raw"
 
-nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov.csv")
+nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov_v2.csv")
 frames = []
 for cy in list("DEFGHIJ"):
     df, _ = pyreadstat.read_xport(NRAW + rf"\DEMO_{cy}.XPT", usecols=["SEQN", "SDMVSTRA", "SDMVPSU"])

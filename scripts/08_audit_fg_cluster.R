@@ -18,9 +18,11 @@ d <- pr %>% left_join(ev, by = "ID_12") %>%
   mutate(WTI_sd = (WTI - mean(WTI, na.rm=TRUE)) / sd(WTI, na.rm=TRUE),
          sex_m = ifelse(sex == 1, 1, 0),
          age = as.numeric(age)) %>%
-  filter(!is.na(WTI_sd) & !is.na(age) & !is.na(bmi) & !is.na(stroke)) %>%
+  filter(!is.na(WTI_sd) & !is.na(age) & !is.na(sex_m) & !is.na(stroke) &
+           !is.na(bloodweight) & bloodweight > 0) %>%
   mutate(fstatus = ifelse(stroke, 1, ifelse(death, 2, 0)),
-         ftime = pmin(time, 7.0))
+         ftime = pmin(time, 7.0)) %>%
+  filter(!is.na(fstatus) & !is.na(ftime))
 logline("analytic n=%d stroke=%d death=%d", nrow(d), sum(d$stroke), sum(d$death))
 
 # original iid FG M1

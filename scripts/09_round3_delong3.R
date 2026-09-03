@@ -1,7 +1,7 @@
 # verify NHANES DeLong p on the 03b discrimination analytic sample (TyG/ABSI complete)
 suppressPackageStartupMessages({library(pROC); library(dplyr); library(readr); library(haven)})
 RAW <- "D:/NHANES"; NRAW <- file.path(RAW, "data/raw"); OUT <- file.path(RAW, "data/processed")
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 glu <- lapply(c("D","E","F","G","H","I","J"), function(cy) {
   read_xpt(file.path(NRAW, sprintf("GLU_%s.XPT", cy))) %>%
     transmute(SEQN, LBXGLU = as.numeric(LBXGLU), CYCLE = cy)

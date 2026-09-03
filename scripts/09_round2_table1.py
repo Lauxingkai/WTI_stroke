@@ -38,7 +38,7 @@ def cell(tag, got, want):
         log(f"FAIL {tag}: got {got!r} want {want!r}")
 
 # ---------------- NHANES ----------------
-nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov.csv")
+nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov_v2.csv")
 frames = []
 for cy in list("DEFGHIJ"):
     df, _ = pyreadstat.read_xport(NRAW + rf"\DEMO_{cy}.XPT", usecols=["SEQN", "SDMVSTRA", "SDMVPSU"])

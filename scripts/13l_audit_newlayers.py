@@ -147,7 +147,7 @@ log(f"P2 IRLS CM1: OR={np.exp(beta[1]):.6f} | R ref={float(rref('r15','cross','C
 # ============================================================================
 # P3: NDI Cox cross-check (lifelines)
 # ============================================================================
-nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov.csv")
+nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov_v2.csv")
 mort = pd.read_csv(DATA + r"\nhanes_mort2019.csv")
 nh = nh.merge(mort[["seqn", "eligstat", "mortstat", "ucod_leading", "permth_int"]],
               left_on="SEQN", right_on="seqn", how="left")
@@ -155,8 +155,8 @@ nh["wt"] = nh["WTSAF"] / 7
 nh["WTI_sd"] = (nh["WTI"] - nh["WTI"].mean()) / nh["WTI"].std()
 nh["WTI_ter"] = pd.cut(nh["WTI"], np.nanquantile(nh["WTI"], [0, 1/3, 2/3, 1]),
                        include_lowest=True, labels=["T1", "T2", "T3"])
-nh["pa_ter"] = pd.cut(nh["pa_min_day"],
-                      np.nanquantile(nh["pa_min_day"].dropna(), [0, 1/3, 2/3, 1]),
+nh["pa_ter"] = pd.cut(nh["pa_mvpaw_min"],
+                      np.nanquantile(nh["pa_mvpaw_min"].dropna(), [0, 1/3, 2/3, 1]),
                       include_lowest=True, labels=["L", "M", "H"])
 nh["time_y"] = nh["permth_int"] / 12
 nh["death"] = (nh["mortstat"] == 1).astype(float)

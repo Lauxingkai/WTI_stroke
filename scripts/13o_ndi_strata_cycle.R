@@ -12,7 +12,7 @@ RAW <- "D:/NHANES"; NRAW <- file.path(RAW, "data/raw")
 OUT <- file.path(RAW, "data"); PROC <- file.path(RAW, "data/processed")
 RES <- file.path(RAW, "results"); QC <- file.path(RAW, "qc")
 
-nh <- read_csv(file.path(PROC, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(PROC, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 mort <- read_csv(file.path(OUT, "nhanes_mort2019.csv"), show_col_types = FALSE) %>%
   select(seqn, eligstat, mortstat, ucod_leading, permth_int)
 des <- lapply(c("D", "E", "F", "G", "H", "I", "J"), function(cy) {
@@ -27,7 +27,7 @@ nh <- nh %>% left_join(mort, by = c("SEQN" = "seqn")) %>%
          psu = paste0(CYCLE, "_", SDMVPSU),
          stra = paste0(CYCLE, "_", SDMVSTRA),
          WTI_sd = (WTI - mean(WTI, na.rm = TRUE)) / sd(WTI, na.rm = TRUE),
-         pa_ter = cut(pa_min_day, quantile(pa_min_day, c(0, 1/3, 2/3, 1), na.rm = TRUE),
+         pa_ter = cut(pa_mvpaw_min, quantile(pa_mvpaw_min, c(0, 1/3, 2/3, 1), na.rm = TRUE),
                       include.lowest = TRUE, labels = c("L", "M", "H")),
          time_y = permth_int / 12,
          death = ifelse(mortstat == 1, 1, 0),

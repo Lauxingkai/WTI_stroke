@@ -49,7 +49,7 @@ def run(dat, yvar, covars, tag):
         log(f"{tag} {obj}: py NRI={n:.4f} IDI={i:.6f} | R NRI={rrow.nri:.4f} IDI={rrow.idi:.6f} -> {'OK' if okn else 'FAIL'}")
 
 # NHANES: rebuild 7 objects (independent Python path)
-nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov.csv")
+nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov_v2.csv")
 glu = pd.concat([pyreadstat.read_xport(NRAW + rf"\GLU_{cy}.XPT")[0][["SEQN", "LBXGLU"]].assign(CYCLE=cy)
                  for cy in list("DEFGHIJ")], ignore_index=True)
 bmx = pd.concat([pyreadstat.read_xport(NRAW + rf"\BMX_{cy}.XPT")[0][["SEQN", "BMXHT"]].assign(CYCLE=cy)

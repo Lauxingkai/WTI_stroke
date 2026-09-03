@@ -65,7 +65,7 @@ delong_p <- function(p0, p1, y) {
   2 * pnorm(-abs(z))
 }
 
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 f0 <- glm(stroke ~ RIDAGEYR + RIAGENDR, data = nh, family = binomial())
 f1 <- glm(stroke ~ WTI + RIDAGEYR + RIAGENDR, data = nh, family = binomial())
 p0 <- predict(f0, type = "response"); p1 <- predict(f1, type = "response")

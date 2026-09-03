@@ -24,18 +24,26 @@ d <- pr %>% left_join(ev, by = "ID_12") %>%
     sex_m = ifelse(sex == 1, 1, 0),
     w = bloodweight / mean(bloodweight, na.rm=TRUE),
     age = as.numeric(age)
-  ) %>%
-  filter(!is.na(WTI_sd) & !is.na(age) & !is.na(bmi) & !is.na(stroke))
+  )
+# M1: maximal sample (mirrors 03c v2); M3: covariate-complete
+d1 <- d %>% filter(!is.na(WTI_sd) & !is.na(age) & !is.na(sex_m) & !is.na(stroke) &
+                     !is.na(bloodweight) & bloodweight > 0)
+d3 <- d %>% filter(!is.na(WTI_sd) & !is.na(age) & !is.na(bmi) & !is.na(stroke))
 
 # landmark: exclude events inside (0,2] -> stk13 stroke or death_t < 2
-d0 <- d
-d <- d %>% filter(!(stk13 %in% TRUE) & (is.na(death_t) | death_t >= 2)) %>%
-  mutate(
-    ftime = pmin(time, 7.0) - 2,
-    fstatus = ifelse(stroke, 1, ifelse(death, 2, 0))
-  )
-logline(sprintf("full n=%d (stroke %d, death %d) | after landmark n=%d (stroke %d, death %d)",
-                nrow(d0), sum(d0$stroke), sum(d0$death), nrow(d), sum(d$stroke), sum(d$death)))
+landmark <- function(x) {
+  x %>% filter(!(stk13 %in% TRUE) & (is.na(death_t) | death_t >= 2)) %>%
+    mutate(
+      ftime = pmin(time, 7.0) - 2,
+      fstatus = ifelse(stroke, 1, ifelse(death, 2, 0))
+    )
+}
+d0 <- d1
+d1 <- landmark(d1)
+d3 <- landmark(d3)
+logline(sprintf("full n=%d (stroke %d, death %d) | after landmark M1 n=%d (stroke %d, death %d) | M3 n=%d (stroke %d, death %d)",
+                nrow(d0), sum(d0$stroke), sum(d0$death), nrow(d1), sum(d1$stroke), sum(d1$death),
+                nrow(d3), sum(d3$stroke), sum(d3$death)))
 
 m3form <- Surv(ftime, stroke) ~ WTI_sd + age + sex_m + edu + smoke + drink + bmi +
   htn + dm + lipid_rx + bp_rx + pa_days_week
@@ -46,8 +54,8 @@ add_hr <- function(tag, hr, se, p) {
     model = tag, hr = hr, lo = hr / exp(1.96 * se), hi = hr * exp(1.96 * se), p = p)
 }
 c1 <- coxph(Surv(ftime, stroke) ~ WTI_sd + age + sex_m,
-            data = d, weights = w, cluster = communityID)
-c3 <- coxph(m3form, data = d, weights = w, cluster = communityID)
+            data = d1, weights = w, cluster = communityID)
+c3 <- coxph(m3form, data = d3, weights = w, cluster = communityID)
 extr_cox <- function(fit, tag) {
   s <- summary(fit)$coefficients
   s <- s[grepl("WTI_sd", rownames(s)), , drop = FALSE][1, ]
@@ -58,10 +66,10 @@ extr_cox(c1, "Lag2-Cox-M1"); extr_cox(c3, "Lag2-Cox-M3")
 ph <- cox.zph(c3)
 logline(sprintf("Lag2 PH test global p=%.4f", ph$table["GLOBAL", "p"]))
 
-fg1 <- crr(d$ftime, d$fstatus, cov1 = as.matrix(d[, c("WTI_sd", "age", "sex_m")]),
+fg1 <- crr(d1$ftime, d1$fstatus, cov1 = as.matrix(d1[, c("WTI_sd", "age", "sex_m")]),
            failcode = 1, cencode = 0)
-fg3 <- crr(d$ftime, d$fstatus,
-           cov1 = as.matrix(d[, c("WTI_sd", "age", "sex_m", "edu", "smoke", "drink",
+fg3 <- crr(d3$ftime, d3$fstatus,
+           cov1 = as.matrix(d3[, c("WTI_sd", "age", "sex_m", "edu", "smoke", "drink",
                                   "bmi", "htn", "dm", "lipid_rx", "bp_rx", "pa_days_week")]),
            failcode = 1, cencode = 0)
 extr_fg <- function(fit, tag) {

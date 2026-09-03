@@ -3,7 +3,7 @@ suppressPackageStartupMessages({library(pROC); library(dplyr); library(readr)})
 set.seed(42)
 RAW <- "D:/NHANES"; OUT <- file.path(RAW, "data/processed")
 
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE)
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE)
 f0 <- glm(stroke ~ RIDAGEYR + RIAGENDR, data = nh, family = binomial())
 f1 <- glm(stroke ~ WTI + RIDAGEYR + RIAGENDR, data = nh, family = binomial())
 r0 <- roc(nh$stroke, predict(f0, type = "response"), quiet = TRUE)

@@ -41,7 +41,7 @@ mde_cox <- function(events, p_exposed_r2) {
 
 # ---------------- NHANES M3 ----------------
 logline("=== T18 VIF: NHANES M3 covariates ===")
-nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov.csv"), show_col_types = FALSE) %>%
+nh <- read_csv(file.path(OUT, "nhanes_fasting_cross_cov_v2.csv"), show_col_types = FALSE) %>%
   mutate(WTI_sd = (WTI - mean(WTI, na.rm=TRUE)) / sd(WTI, na.rm=TRUE))
 nh_m3 <- c("RIDAGEYR", "RIAGENDR", "RIDRETH1", "edu", "smoke", "drink",
            "bmi", "htn", "dm", "statin", "bp_rx")

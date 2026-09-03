@@ -87,7 +87,7 @@ for tag, covs in [("M1", ["lWTI_sd", "age", "sex_m"]),
         f"{np.exp(m.params['lWTI_sd']+1.96*m.bse['lWTI_sd']):.3f}) "
         f"p={m.pvalues['lWTI_sd']:.3f} (n={n}) | linear CM{tag[-1] if tag!='M1' else '1'} ref 1.237/1.177/1.097")
 
-nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov.csv")
+nh = pd.read_csv(OUT + r"\nhanes_fasting_cross_cov_v2.csv")
 mort = pd.read_csv(DATA + r"\nhanes_mort2019.csv")
 nh = nh.merge(mort[["seqn", "mortstat", "ucod_leading", "permth_int"]],
               left_on="SEQN", right_on="seqn", how="left")

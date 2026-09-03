@@ -1,6 +1,6 @@
 # 13g2_fg_debug.R — isolate the Fine-Gray error
 suppressPackageStartupMessages({ library(survival); library(dplyr); library(readr) })
-nh <- read_csv("D:/NHANES/data/processed/nhanes_fasting_cross_cov.csv", show_col_types = FALSE)
+nh <- read_csv("D:/NHANES/data/processed/nhanes_fasting_cross_cov_v2.csv", show_col_types = FALSE)
 mort <- read_csv("D:/NHANES/data/nhanes_mort2019.csv", show_col_types = FALSE) %>%
   select(seqn, mortstat, ucod_leading, permth_int)
 nh <- nh %>% left_join(mort, by = c("SEQN" = "seqn")) %>%

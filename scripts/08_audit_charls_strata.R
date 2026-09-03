@@ -9,7 +9,8 @@ ch <- read_csv(file.path(OUT, "charls_2011_cross_cov.csv"), show_col_types = FAL
   mutate(WTI_sd = (WTI - mean(WTI, na.rm=TRUE)) / sd(WTI, na.rm=TRUE),
          sex_m = ifelse(sex == 1, 1, 0), age = as.numeric(age),
          w_norm = bloodweight / mean(bloodweight, na.rm=TRUE)) %>%
-  filter(!is.na(bloodweight) & bloodweight > 0 & !is.na(bmi) & !is.na(age))
+  filter(!is.na(bloodweight) & bloodweight > 0 & !is.na(age) & !is.na(sex_m) &
+           !is.na(WTI) & !is.na(stroke_base))
 chd <- svydesign(ids = ~communityID, strata = ~urban_nbs, weights = ~w_norm, data = ch, nest = TRUE)
 runm <- function(design, form, tag) {
   m <- svyglm(form, family = quasibinomial(), design = design)
@@ -31,7 +32,8 @@ d <- pr %>% left_join(ev, by = "ID_12") %>%
          sex_m = ifelse(sex == 1, 1, 0), age = as.numeric(age),
          w = bloodweight / mean(bloodweight, na.rm=TRUE),
          fstatus = ifelse(stroke, 1, ifelse(death, 2, 0)), ftime = pmin(time, 7.0)) %>%
-  filter(!is.na(WTI_sd) & !is.na(age) & !is.na(bmi) & !is.na(stroke))
+  filter(!is.na(WTI_sd) & !is.na(age) & !is.na(sex_m) & !is.na(stroke) &
+           !is.na(bloodweight) & bloodweight > 0)
 logline("=== CHARLS prospective strata (weighted logistic, 2018-wave outcome) ===")
 pd <- svydesign(ids = ~communityID, strata = ~urban_nbs, weights = ~w, data = d, nest = TRUE)
 runm(pd, stroke_2018 ~ WTI_sd + age + sex_m, "all pm1")

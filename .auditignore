@@ -1,0 +1,10 @@
+# 审计白名单（治理策略 §1-R3）
+backup_*/
+backup_20*/
+scripts_archive_*/
+_tmp_*
+*.bak*
+.checkdoc_tmp*
+AUTHOR_INFO.md
+literature_*
+gen_*_2026*

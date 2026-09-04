@@ -78,7 +78,8 @@ def check_package(draft_dir: str, required: list, extra_optional: list):
 
 def check_citations(draft_text: str, refs_start_marker="References"):
     """引用双向核验：正文 [n] 解析 vs References 条目数。"""
-    # 正文引用号（含 [1-3,5] 区间）
+    # 正文引用号（含 [1-3,5] 区间）；兼容 pandoc 转义的 "\["
+    draft_text = draft_text.replace("\\[", "[").replace("\\]", "]")
     cited = set()
     for grp in re.findall(r"\[(\d+(?:[-,]\d+)*)\]", draft_text):
         for part in grp.split(","):

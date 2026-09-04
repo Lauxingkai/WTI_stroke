@@ -40,3 +40,10 @@ OSF (retrospective registration; see `OSF_preregistration_draft.md`); STROBE che
 ## License
 
 Code: MIT. Data: see NHANES/CHARLS terms.
+
+
+## 发布规程（版本治理，2026-09-05）
+- 唯一权威源：D:\NHANES\scripts（工作区）；本仓库=只读发布镜像（单向拷贝）。
+- 修改顺序：改工作区 → 闸链（number_gate → sync_check → submission_gate → verify_checkdoc）→ 拷贝镜像 → git push。
+- 审计白名单 .auditignore（backup_*/scripts_archive*/_tmp_*）。
+- 环境：D:\anaconda\python.exe（envs/requirements.txt）。

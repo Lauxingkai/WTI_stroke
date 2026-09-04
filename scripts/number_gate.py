@@ -25,7 +25,7 @@ CONSTRAINTS = [
  ('EN-per10', 'EN', [], ['per-10cm', '1.22(1.13-1.33)', '1.00(0.99-1.01)']),
  ('EN-PA', 'EN', ['minutes/day'], ['minutes/week']),
  ('EN-DA', 'EN', ['willbeshared', 'Untilthecodeisdeposited'], ['github.com/Lauxingkai/WTI_stroke']),
- ('EN-typo', 'EN', ['particpipants', '9,'], []),
+ ('EN-typo', 'EN', ['particpipants', '\u005b9,'], []),
  ('EN-UK', 'EN', [], ['normalised', 'Parameterisation', 'ischaemic']),
  ('ZH-Eval', 'ZH', ['1.05-1.34', '趋近1（表4）'], ['1.14-1.44']),
  ('ZH-HTGW', 'ZH', ['0.86，0.68-1.08'], ['0.83，0.66-1.05']),

@@ -28,6 +28,11 @@ def cell_text(v):
         return str(v)
     return str(v)
 
+def strip_comma(s):
+    # BMC table rule: no comma separators in numerical values
+    import re
+    return re.sub(r'(?<=\d),(?=\d{3})', '', str(s))
+
 def add_table(title, df, footnote):
     h = doc.add_paragraph()
     r = h.add_run(title); r.bold = True; r.font.size = Pt(9)
@@ -41,7 +46,7 @@ def add_table(title, df, footnote):
     for _, row in df.iterrows():
         cells = t.add_row().cells
         for j, v in enumerate(row):
-            cells[j].text = cell_text(v)
+            cells[j].text = strip_comma(cell_text(v))
             for p in cells[j].paragraphs:
                 p.runs[0].font.size = Pt(8)
     f = doc.add_paragraph()
@@ -123,13 +128,12 @@ for var in vars_order + sorted(all_vars - set(vars_order)):
 t1 = pd.DataFrame(rows, columns=["Variable", "NHANES no stroke", "NHANES stroke", "P",
                                  "CHARLS no stroke", "CHARLS stroke", "P"])
 add_table(
-    "Table 1. Baseline characteristics by stroke status, NHANES 2005-2018 fasting subsample "
-    "and CHARLS 2011 cross-sectional wave",
+    "Table 1. Baseline characteristics by stroke status in NHANES 2005-2018 and CHARLS 2011",
     t1,
     "Continuous variables: median (IQR); categorical: n (weighted %). Design-corrected tests "
-    "(Rao-Scott chi-square or weighted Wald). NHANES n = 10,302 (no stroke 9,771; stroke 531), "
-    "pooled fasting-subsample weights. CHARLS n = 9,856 minimally adjusted (M1) sample "
-    "(no stroke 9,636; stroke 220), 2011 blood weights, community cluster. "
+    "(Rao-Scott chi-square or weighted Wald). NHANES n = 10302 (no stroke 9771; stroke 531), "
+    "pooled fasting-subsample weights. CHARLS n = 9856 minimally adjusted (M1) sample "
+    "(no stroke 9636; stroke 220), 2011 blood weights, community cluster. "
     "CHARLS MVPA in days/week; NHANES physical activity in min/day.")
 
 # ---- Table 2: main associations ----
@@ -139,12 +143,22 @@ add_table("Table 2. Main associations of WTI with stroke (per 1-SD), by cohort a
               "M3 = +hypertension/diabetes/lipid-lowering/antihypertensive medication/physical activity. "
               "HR: weighted Cox (cluster = community); sHR: Fine-Gray subdistribution (unweighted, iid SE; "
               "community-block bootstrap CIs in Table S3). "
-              "n/events are model-fitted counts: CHARLS cross-sectional M1 n = 9,856 (220 events), adjusted models n = 9,206 (178); "
-              "CHARLS prospective M1 n = 9,636 (569 events, 131 deaths), adjusted models n = 9,028 (515, 107); "
-              "NHANES n = 10,302 (531 events).")
+              "n/events are model-fitted counts: CHARLS cross-sectional M1 n = 9856 (220 events), adjusted models n = 9206 (178); "
+              "CHARLS prospective M1 n = 9636 (569 events, 131 deaths), adjusted models n = 9028 (515, 107); "
+              "NHANES n = 10302 (531 events).")
 
 # ---- Table 3: discrimination ----
 t3 = pd.read_csv(RES + r"\Table3_discrimination.csv")
+def pad3(v):
+    s = str(v)
+    if s.count(".") == 1 and s.replace(".", "").replace("-", "").isdigit():
+        d = len(s.split(".")[1])
+        if d < 3:
+            return s + "0" * (3 - d)
+    return s
+for _c in ("Delta AUC vs base", "Delta AUC vs WTI"):
+    if _c in t3.columns:
+        t3[_c] = t3[_c].map(pad3)
 add_table("Table 3. Discrimination of seven indices for stroke (base model: age + sex)",
           t3, "AUC: unweighted complete-case logistic predictions, DeLong CI; vs-base column: DeLong test "
               "of each index against the base model (age + sex). NRI/IDI: continuous, bootstrap percentile CIs (B = 1000). "
@@ -154,16 +168,16 @@ add_table("Table 3. Discrimination of seven indices for stroke (base model: age 
 t4 = pd.read_csv(RES + r"\Table4_sensitivity.csv")
 add_table("Table 4. Sensitivity and mediation analyses",
           t4, "E-value per VanderWeele & Ding (rare-outcome approximation); Lag-2 landmark excludes events/deaths within 2 y "
-              "(M1 n = 9,545, 539 strokes; M3 n = 8,965, 492 strokes); interval-censored discrete-time person-period model (3 intervals); "
+              "(M1 n = 9545, 539 strokes; M3 n = 8965, 492 strokes); interval-censored discrete-time person-period model (3 intervals); "
               "mediation: product-of-coefficients, individual-resampling bootstrap (B = 1000), 2011 WTI -> 2015 mediator -> 2018 stroke. "
-              "Regression calibration corrected HR from repeated TG pairs (2011-2015, n = 7,482; calibration slope 0.52).")
+              "Regression calibration corrected HR from repeated TG pairs (2011-2015, n = 7482; calibration slope 0.52).")
 
 # ---- Table 5: CHARLS 2015 replication + NHANES NDI prospective layers ----
 r15 = pd.read_csv(RES + r"\13_2015_main_models.csv")
 rn  = pd.read_csv(RES + r"\13g_ndi_cox_models.csv")
 
 def fmt(row):
-    return f"{row.est:.3f} ({row.lo:.3f}-{row.hi:.3f})"
+    return f"{row.est:.2f} ({row.lo:.2f}-{row.hi:.2f})"  # 2dp to match Tables 2-4 and text (F1 audit 2026-09-05)
 
 rows5 = []
 def row5(layer, model, key, src="r15"):
@@ -183,14 +197,14 @@ row5("NHANES NDI stroke death", "SM3", "stroke-death", src="rn")
 row5("NHANES NDI stroke death, Fine-Gray", "M3", "stroke-death-FG", src="rn")
 
 t5 = pd.DataFrame(rows5, columns=["Layer", "Model", "OR/HR/sHR (95% CI)", "P", "n", "events"])
-add_table("Table 5. Replication (CHARLS 2015) and NHANES NDI mortality associations of WTI with stroke (per 1-SD)",
+add_table("Table 5. CHARLS 2015 replication and NHANES NDI mortality associations of WTI with stroke",
           t5, "CHARLS 2015: survey-weighted logistic (quasibinomial), design = community cluster + urban/rural strata, "
               "weight = 2015 blood weight normalized; M1 age/sex, M2 + education/smoking/drinking/BMI, "
               "M3 + hypertension/diabetes/lipid-lowering/antihypertensive medication/physical activity. "
               "Physician-confirmed stroke: doctor-told verification records (33 events). "
               "NHANES NDI: survey-weighted cause-specific Cox (cluster = cycle-specific PSU, strata likewise, pooled weights), "
-              "follow-up through Dec 31, 2019 (median 6.9 y; 74,744 person-years); stroke death = underlying cause I60-I69. "
-              "Events are model-fitted (complete cases); cohort totals: all-cause 1,428 and cerebrovascular 83 deaths (n = 10,289); "
+              "follow-up through Dec 31, 2019 (median 6.9 y; 74744 person-years); stroke death = underlying cause I60-I69. "
+              "Events are model-fitted (complete cases); cohort totals: all-cause 1428 and cerebrovascular 83 deaths (n = 10289); "
               "stroke-death M1 fitted on 83 events, M3 on 82. "
               "Fine-Gray: unweighted, other deaths as competing events. Full row sets in Supplementary Tables S4-S5.")
 
